@@ -46,10 +46,10 @@ String DDListname;
 Button CON;
 
 void setup() {
-  size(610, 550, P2D);
+  size(610, 550);
   smooth();
   controlP5 = new ControlP5(this);
-  
+
   d2 = controlP5.addDropdownList("SerialList", 10, 40, 150, 200);
   customize2(d2);
 
@@ -65,7 +65,7 @@ void setup() {
   controlP5.setColorBackground(0xffBCBCBC);
   controlP5.setColorLabel(0xff000000);
   controlP5.setColorValue(0xff000000);
-  
+
   lineGraph = new ADLinechart(10, 300, 590, 235, "Data Set 1");
   lineGraph.setParameters(false, "Title of the GRAPH", 24, 40, false, "X Label", 16, 10, 20, true, "Amperage", 16, 25, false, 10, 10, 10, true, true, false, 49, 38, -31, 10, 4, 10, 590, 235, 100, 5, 2, 50);
   lineGraph.setColors(-14275983, -14275983, -14275983, -14275983, -14275983, -1, -1842205);
@@ -74,25 +74,23 @@ void setup() {
   lineGraph.setMinMax(-5);
 
   lineGraph2 = new ADLinechart(10, 50, 590, 235, "Data Set 2");
-  lineGraph2.setParameters(false, "Title of the GRAPH", 24, 40, false, "X Label", 16, 10, 20, true, "Amp-Hours", 16, 25, false, 10, 10, 10, true, true, false, 49, 38, -31, 10, 4, 10, 590, 235, 100, 5, 2, 50);
+  lineGraph2.setParameters(false, "Title of the GRAPH", 24, 40, false, "X Label", 16, 10, 20, true, "Amp-Hours", 16, 25, false, 20, 10, 10, true, true, false, 49, 38, -31, 10, 4, 10, 590, 235, 100, 5, 2, 50);
   lineGraph2.setColors(-14275983, -14275983, -14275983, -14275983, -14275983, -1, -1842205);
   lineGraph2.setBorderWidth(1);
   lineGraph2.addDataSet("Data Set 2");
   lineGraph2.setMinMax(CAPvalue+1);
-    
+
   img = loadImage("ABAtitle_white.png");  // Load the image into the program
 
-controlP5.getTooltip().setDelay(200);
-  controlP5.getTooltip().register("calibrate","To Calibrate AutoBlock AMP:\nApply known current, enter value and press enter.");
-    controlP5.getTooltip().register("ZERO","Zeros AutoBlock AMP\nand restarts Ah counting");
-
-
+  controlP5.getTooltip().setDelay(200);
+  controlP5.getTooltip().register("calibrate", "To Calibrate AutoBlock AMP: Apply known current, enter value and press enter.");
+  controlP5.getTooltip().register("ZERO", "Zeros AutoBlock AMP and restarts Ah counting");
 }
 
 void draw() {
 
   background(255);
-  
+
   image(img, 450, 5);
 
 
@@ -103,30 +101,29 @@ void draw() {
 
       if (packet.packetType == 5) {   // this is Ah packet
         Ah = (packet.value);
-        // println(Ah);
-        Ah = CAPvalue-(Ah/1000);
-        
         println(Ah);
-        
-           lineGraph2.pushValue(Ah, (millis()/1000), 1);
+        Ah = CAPvalue-(Ah/1000);   // need to change this line...
+
+       // println(Ah);
+
+        lineGraph2.pushValue(Ah, (millis()/1000), 1);
       }
 
       if (packet.packetType == 4) {   // this is Amp packet
         amperage = (packet.value);
         amperage = amperage/100;
-              lineGraph.pushValue(amperage, (millis()/1000), 0);
-
+        lineGraph.pushValue(amperage, (millis()/1000), 0);
       }
 
-     // lineGraph.pushValue(amperage, (millis()/1000), 0);
-   //   lineGraph2.pushValue(Ah, (millis()/1000), 1);
-
+      // lineGraph.pushValue(amperage, (millis()/1000), 0);
+      //   lineGraph2.pushValue(Ah, (millis()/1000), 1);
     }
   }
 
   lineGraph.update();
   lineGraph2.update();
-  
+
+  //  controlP5.draw();
 }
 
 void serialEvent(Serial p) {
@@ -134,14 +131,13 @@ void serialEvent(Serial p) {
 }
 
 void openPortAndGo() {
-  serialPort = new Serial(this, portName, 115200);
+  serialPort = new Serial(this, portName, 57600);
   serialPort.clear();
   serialPort.bufferUntil(byte(SlipEnd));
   serialReader = new SerialReader(serialPort, "serial1", portName);
-
 }
 
-void controlEvent(ControlEvent theControlEvent) {
+void controlEvent(ControlEvent theControlEvent) {    
 
   if (theControlEvent.isGroup()) {
 
@@ -152,7 +148,7 @@ void controlEvent(ControlEvent theControlEvent) {
       CON.setColorForeground(0xFF39E444);
 
       println(round(theControlEvent.group().value())); 
-//      d2.captionLabel().setFontSize(13);
+      //      d2.captionLabel().setFontSize(13);
       d2.captionLabel().style().marginTop = 8;
       println(Serial.list().length);
 
@@ -219,10 +215,10 @@ void controlEvent(ControlEvent theControlEvent) {
 
       slipSend(packet.ConfigBuffer[8]);   
 
-      slipSend((round(newslope) >> 8) & 0x03);     // Slope MSB
+      slipSend((round(newslope) >> 8));     // Slope MSB
       slipSend(round(newslope) & 0xff);            // SLOPE LSB
 
-      slipSend((InterceptCalibrate >> 8) & 0x03);     // INT MSB
+      slipSend((InterceptCalibrate >> 8));     // INT MSB
       slipSend(InterceptCalibrate & 0xff);            // INT LSB
 
       slipSend(OUTPUTMODE); 
@@ -235,7 +231,7 @@ void controlEvent(ControlEvent theControlEvent) {
 
     if (theControlEvent.controller().name().equals("ZERO")) {   //this updates range values
 
-      slipStart();
+        slipStart();
       slipSend(0x00);    //version
       slipSend(0x00);    //Payload Size MSB
       slipSend(0x00);    //Payload Size LSB
@@ -246,26 +242,48 @@ void controlEvent(ControlEvent theControlEvent) {
       LoadfromAB();
     }
 
-    if (theControlEvent.controller().name().equals("CONNECT")) {   //this updates range values
+    if (theControlEvent.controller().name().equals("CONNECT")) { 
 
-        if (CONNECTED == false && portselected == true) {
+      if (CONNECTED == false && portselected == true) {
 
-          CONNECTED = true; 
-          println("connected");
+        CONNECTED = true; 
+
+        openPortAndGo();  
+        println("First attempt to connect");
+        CON.setColorBackground(0xffBCBCBC);
+        delay(500);
+
+      if (serialReader.available() == false) {   // check to see if we connected, if not, close and try again
+
+          delay(500);
+          serialPort.clear();
+          serialPort.stop();
           openPortAndGo();
-          LoadfromAB();
-          lineGraph2.setMinMax(CAPvalue);
+          println("2nd attempt");
+        }
+        
+      if (serialReader.available() == false) {   // check to see if we connected, if not, close and try again
+
+          delay(500);
+          serialPort.clear();
+          serialPort.stop();
+          openPortAndGo();
+          println("3rd attempt");
+        }
+
+        LoadfromAB();
+        lineGraph2.setMinMax(CAPvalue);
       }
 
-      else if (CONNECTED == true && portselected == true) {
+      else if (CONNECTED == true && portselected == true) {   // closing connection
 
         CONNECTED = false;
         CON.setColorActive(color(60));
         serialPort.clear();
         serialPort.stop();
+        println("Disconnecting");
       }
     }
-    
   }
 }
 
@@ -328,6 +346,7 @@ void LoadfromAB() {
     slipSend(0x00);     // checksum
     slipEnd();
 
+
     if (serialReader.available()) {
       packet = serialReader.getPacket(); 
 
@@ -341,17 +360,17 @@ void LoadfromAB() {
         Slope = (packet.ConfigBuffer[9] << 8) + packet.ConfigBuffer[10];
         Intercept = (packet.ConfigBuffer[11] << 8) + packet.ConfigBuffer[12];
 
-//        print("FGH is: "+TempFGH);
-//        println(", FGL is: "+TempFGL);
-//        println("LL is: "+LLvalue); 
-//        println("CAP is: "+CAPvalue);          
-//        println("tach is: "+tach); 
-//        println("Slope is: "+Slope); 
-//        println("Intercept is: "+Intercept);
+        //        print("FGH is: "+TempFGH);
+        //        println(", FGL is: "+TempFGL);
+        //        println("LL is: "+LLvalue); 
+        //        println("CAP is: "+CAPvalue);          
+        //        println("tach is: "+tach); 
+        //        println("Slope is: "+Slope); 
+        //        println("Intercept is: "+Intercept);
 
-        Loaded = true; 
-
+        Loaded = true;
       }
     }
   }
 } 
+
